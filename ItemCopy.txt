@@ -113,7 +113,9 @@ function PoeItem(div) {
         var itemMods = "";
         this.htmlDiv.find("ul .mods:not(.withline) li").each(function(){
             var that = $(this);
-            if (that.text().indexOf('enchanted') === -1 && that.text().indexOf('crafted') === -1) {
+            if (that.text().indexOf('enchanted') === -1 && 
+                that.text().indexOf('crafted') === -1 &&
+                that.text().indexOf('pseudo') === -1) {
                 itemMods += that.contents().not($("span")).text() + '\r\n';
             }
         });
