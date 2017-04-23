@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PoeTrade Item Copy
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Copy items from Poe.Trade to Path of Building
 // @author       Fikal
 // @match        http://poe.trade/*
