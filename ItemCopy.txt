@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PoeTrade Item Copy
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Copy items from Poe.Trade to Path of Building
 // @author       Fikal
 // @match        http://poe.trade/*
@@ -15,7 +15,7 @@ waitForKeyElements ("#search-results-0", addCopyLinks);
 
 function addCopyLinks() {
     var rows = $('*[id^="item-container-"]');
-
+    
     rows.each(function(){
 
         var that = $(this),
@@ -26,9 +26,11 @@ function addCopyLinks() {
             var poeObject = new PoeItem(that);
             GM_setClipboard (poeObject.buildItem());
             $(this).text('Copied to clipboard');
-        });
+       });
 
         $(this).find(".bottom-row .proplist").append($('<li>').html(link));
+        
+       
 
     });
 }
@@ -37,6 +39,7 @@ function PoeItem(div) {
     
     var itemName = "";
     var itemType = "";
+    var implicitModCount = 0;
     
     this.htmlDiv = div;
     //taken from poe.trade source
@@ -87,12 +90,20 @@ function PoeItem(div) {
         if (enchanted !== "") {
             return enchanted.trim();
         } else {
-            return this.returnImplicitMod();
+            return this.returnImplicitMods();
         }
     };
     
-    this.returnImplicitMod = function() {
-        return this.htmlDiv.find(".withline li").text().trim();
+    this.returnImplicitMods = function() {
+        var itemMods = "";
+        var modCount = 0;
+        this.htmlDiv.find(".withline li").each(function(){
+            var that = $(this);
+            modCount += 1;
+            itemMods += that.text() + '\r\n';
+        });
+        this.implicitModCount = modCount;
+        return itemMods.trim();
     };
     
     this.returnEnchantedMods = function() {
@@ -108,17 +119,16 @@ function PoeItem(div) {
         return itemMods;
     };
 
-    this.returnCraftedMod = function() {
-        var craftedItem = "";
+    this.returnCraftedMods = function() {
+        var craftedItems = "";
         this.htmlDiv.find("ul .mods:not(.withline) li").each(function(){
             var that = $(this);
    
             if (that.text().indexOf('crafted') !== -1) {
-                craftedItem = that.text().replace("crafted", "").trim() + '\r\n';
-                return;
+                craftedItems += '{crafted}' + that.text().replace("crafted", "").trim() + '\r\n';
             }
         });
-        return craftedItem;
+        return craftedItems;
     };
 
     
@@ -141,12 +151,8 @@ PoeItem.prototype.buildItem = function() {
 
     var itemMods = this.returnItemMods();
     var implicit = this.returnImplicit();
-    var implicitCount = 0;
 
     this.returnItemNameAndType();
-
-    if (implicit !== "")
-        implicitCount = 1;
 
     var item = "";
     
@@ -166,16 +172,16 @@ PoeItem.prototype.buildItem = function() {
     if (sockets !== "")
         item += "Sockets: " + sockets + '\r\n';
 
-    item += 'Implicits: ' + implicitCount + '\r\n';
+    item += 'Implicits: ' + this.implicitModCount + '\r\n';
 
     if (implicit !== "")
         item += implicit + '\r\n';
 
     item += itemMods;
 
-    var crafted = this.returnCraftedMod();
+    var crafted = this.returnCraftedMods();
     if (crafted !== "") {
-        item += '{crafted}' + crafted;
+        item += crafted;
     }
 
     return item.trim();
