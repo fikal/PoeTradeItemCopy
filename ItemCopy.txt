@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PoeTrade Item Copy
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  Copy items from Poe.Trade to Path of Building
 // @author       Fikal
 // @match        http://poe.trade/*
@@ -170,7 +170,7 @@ function PoeItem(div) {
             if (that.text().indexOf('enchanted') === -1 && 
                 that.text().indexOf('crafted') === -1 &&
                 that.text().indexOf('pseudo') === -1) {
-                itemMods += that.contents().not($("span")).text() + '\r\n';
+                itemMods += that.contents().not($("span")).text().trim() + '\r\n';
             }
         });
         return itemMods;
