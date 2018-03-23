@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PoeTrade Item Copy
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.9
 // @description  Copy items from Poe.Trade to Path of Building
 // @author       Fikal
 // @match        http://poe.trade/*
@@ -98,6 +98,7 @@ function PoeItem(div) {
                 }
 
                 this.itemType = currentItemType;
+
                 return;
             }
         }
@@ -108,7 +109,7 @@ function PoeItem(div) {
     };
 
     this.returnItemSockets = function() {
-        return this.htmlDiv.find(".sockets-raw").text().trim();
+        return this.htmlDiv.find(".socket").length;
     };
 
     this.returnLevelRequirement = function() {
@@ -198,7 +199,8 @@ PoeItem.prototype.buildItem = function() {
     if (rarity !== "")
         item += "Rarity: " + rarity + '\r\n';
 
-    item += this.itemName + '\r\n';
+    if (this.itemName != "")
+        item += this.itemName + '\r\n';
     item += this.itemType + '\r\n';
     item += 'Item Level: ' + this.returnItemLevel() + '\r\n';
 
