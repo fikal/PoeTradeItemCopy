@@ -49,6 +49,7 @@ function PoeItem(div) {
 
     var itemName = "";
     var itemType = "";
+
     this.regex = /.*\w$/g;
     this.htmlDiv = div;
     //taken from poe.trade source
@@ -118,7 +119,7 @@ function PoeItem(div) {
                 sockets += "-";
             } else {
                 if (this.regex.exec(sockets)) {
-                    sockets += " "
+                    sockets += " ";
                 }
                 if (classes.indexOf('socketI') >= 0) {
                     sockets += "B";
@@ -126,6 +127,8 @@ function PoeItem(div) {
                     sockets += "G";
                 } else if (classes.indexOf('socketS') >= 0) {
                     sockets += "R";
+                } else if (classes.indexOf('socketG') >= 0) {
+                    sockets += "W";
                 }
             }
         }
