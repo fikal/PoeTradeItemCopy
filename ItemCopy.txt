@@ -108,8 +108,28 @@ function PoeItem(div) {
 
     };
 
-    this.returnItemSockets = function() {
-        return this.htmlDiv.find(".socket").length;
+    this.returnItemSockets = function () {
+        var sockets = "";
+        var find = this.htmlDiv.find(".sockets .sockets-inner div");
+        for (var i = 0; i < find.length; i++) {
+            var a = find[i];
+             var classes = a.className.split(' ');
+            if (classes.indexOf('socketLink') >= 0) {
+                sockets += "-";
+            } else {
+                if (this.regex.exec(sockets)) {
+                    sockets += " "
+                }
+                if (classes.indexOf('socketI') >= 0) {
+                    sockets += "B";
+                } else if (classes.indexOf('socketD') >= 0) {
+                    sockets += "G";
+                } else if (classes.indexOf('socketS') >= 0) {
+                    sockets += "R";
+                }
+            }
+        }
+        return sockets;
     };
 
     this.returnLevelRequirement = function() {
