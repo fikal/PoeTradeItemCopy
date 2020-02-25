@@ -1,17 +1,16 @@
 // ==UserScript==
 // @name         PoeTrade Item Copy
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      2.0
 // @description  Copy items from Poe.Trade to Path of Building
 // @author       Fikal
-// @match        http://poe.trade/*
+// @match        https://poe.trade/*
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require      https://gist.github.com/raw/2625891/waitForKeyElements.js
-// @require      https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.6.0/clipboard.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js
 // ==/UserScript==
 
 waitForKeyElements ("#search-results-0", addCopyLinks);
-
 
 function addCopyLinks() {
     var rows = $('*[id^="item-container-"]');
@@ -36,12 +35,9 @@ function addCopyLinks() {
                 $(currentLink).text('Copied to clipboard');
             });
 
-       });
+        });
 
         $(this).find(".bottom-row .proplist").append($('<li>').html(link));
-
-
-
     });
 }
 
@@ -49,72 +45,157 @@ function PoeItem(div) {
 
     var itemName = "";
     var itemType = "";
+    var itemBase = "";
+    var isCorrupted = false;
+    var isSynthesised = false;
+    var isCrusader = false;
+    var isWarlord = false;
+    var isRedeemer = false;
+    var isHunter = false;
+    var isShaper = false;
+    var isElder = false;
+    var isMirror = false;
+
 
     this.regex = /.*\w$/g;
     this.htmlDiv = div;
-    //taken from poe.trade source
-    this.items_types = ["Aventail Helmet", "Barbute Helmet", "Battered Helm", "Bone Circlet", "Bone Helmet", "Callous Mask", "Close Helmet", "Cone Helmet", "Crusader Helmet", "Deicide Mask", "Eternal Burgonet", "Ezomyte Burgonet", "Fencer Helm", "Festival Mask", "Fluted Bascinet", "Gilded Sallet", "Gladiator Helmet", "Golden Mask", "Golden Wreath", "Great Crown", "Great Helmet", "Harlequin Mask", "Hubris Circlet", "Hunter Hood", "Iron Circlet", "Iron Hat", "Iron Mask", "Lacquered Helmet", "Leather Cap", "Leather Hood", "Lion Pelt", "Lunaris Circlet", "Magistrate Crown", "Mind Cage", "Necromancer Circlet", "Nightmare Bascinet", "Noble Tricorne", "Pig-Faced Bascinet", "Plague Mask", "Praetor Crown", "Prophet Crown", "Raven Mask", "Reaver Helmet", "Regicide Mask", "Royal Burgonet", "Rusted Coif", "Sallet", "Samite Helmet", "Scare Mask", "Secutor Helm", "Siege Helmet", "Silken Hood", "Sinner Tricorne", "Solaris Circlet", "Soldier Helmet", "Steel Circlet", "Torture Cage", "Tribal Circlet", "Tricorne", "Ursine Pelt", "Vaal Mask", "Vine Circlet", "Visored Sallet", "Wolf Pelt", "Zealot Helmet", "Arming Axe", "Boarding Axe", "Broad Axe", "Butcher Axe", "Ceremonial Axe", "Chest Splitter", "Cleaver", "Decorative Axe", "Engraved Hatchet", "Etched Hatchet", "Infernal Axe", "Jade Hatchet", "Jasper Axe", "Karui Axe", "Reaver Axe", "Royal Axe", "Runic Hatchet", "Rusted Hatchet", "Siege Axe", "Spectral Axe", "Tomahawk", "Vaal Hatchet", "War Axe", "Wraith Axe", "Wrist Chopper", "Amethyst Flask", "Aquamarine Flask", "Basalt Flask", "Bismuth Flask", "Colossal Hybrid Flask", "Colossal Life Flask", "Colossal Mana Flask", "Diamond Flask", "Divine Life Flask", "Divine Mana Flask", "Eternal Life Flask", "Eternal Mana Flask", "Giant Life Flask", "Giant Mana Flask", "Grand Life Flask", "Grand Mana Flask", "Granite Flask", "Greater Life Flask", "Greater Mana Flask", "Hallowed Hybrid Flask", "Hallowed Life Flask", "Hallowed Mana Flask", "Jade Flask", "Large Hybrid Flask", "Large Life Flask", "Large Mana Flask", "Medium Hybrid Flask", "Medium Life Flask", "Medium Mana Flask", "Quartz Flask", "Quicksilver Flask", "Ruby Flask", "Sacred Hybrid Flask", "Sacred Life Flask", "Sacred Mana Flask", "Sanctified Life Flask", "Sanctified Mana Flask", "Sapphire Flask", "Silver Flask", "Small Hybrid Flask", "Small Life Flask", "Small Mana Flask", "Stibnite Flask", "Sulphur Flask", "Topaz Flask", "Fishing Rod", "Ancient Sword", "Antique Rapier", "Apex Rapier", "Baselard", "Basket Rapier", "Battered Foil", "Battle Sword", "Broad Sword", "Burnished Foil", "Copper Sword", "Corsair Sword", "Courtesan Sword", "Cutlass", "Dragonbone Rapier", "Dragoon Sword", "Dusk Blade", "Elder Sword", "Elegant Foil", "Elegant Sword", "Estoc", "Eternal Sword", "Fancy Foil", "Gemstone Sword", "Gladius", "Graceful Sword", "Grappler", "Harpy Rapier", "Hook Sword", "Jagged Foil", "Jewelled Foil", "Legion Sword", "Midnight Blade", "Pecoraro", "Primeval Rapier", "Rusted Spike", "Rusted Sword", "Sabre", "Serrated Foil", "Smallsword", "Spiraled Foil", "Tempered Foil", "Thorn Rapier", "Tiger Hook", "Twilight Blade", "Vaal Blade", "Vaal Rapier", "Variscite Blade", "War Sword", "Whalebone Rapier", "Wyrmbone Rapier", "Awl", "Blinder", "Cat's Paw", "Double Claw", "Eagle Claw", "Eye Gouger", "Fright Claw", "Gemini Claw", "Gouger", "Great White Claw", "Gut Ripper", "Hellion's Paw", "Imperial Claw", "Nailed Fist", "Noble Claw", "Prehistoric Claw", "Sharktooth Claw", "Sparkling Claw", "Terror Claw", "Thresher Claw", "Throat Stabber", "Tiger's Paw", "Timeworn Claw", "Twin Claw", "Vaal Claw", "Arena Plate", "Assassin's Garb", "Astral Plate", "Battle Lamellar", "Battle Plate", "Blood Raiment", "Bone Armour", "Bronze Plate", "Buckskin Tunic", "Cabalist Regalia", "Carnal Armour", "Chain Hauberk", "Chainmail Doublet", "Chainmail Tunic", "Chainmail Vest", "Chestplate", "Colosseum Plate", "Commander's Brigandine", "Conjurer's Vestment", "Conquest Chainmail", "Copper Plate", "Coronal Leather", "Crimson Raiment", "Crusader Chainmail", "Crusader Plate", "Crypt Armour", "Cutthroat's Garb", "Desert Brigandine", "Destiny Leather", "Destroyer Regalia", "Devout Chainmail", "Dragonscale Doublet", "Eelskin Tunic", "Elegant Ringmail", "Exquisite Leather", "Field Lamellar", "Frontier Leather", "Full Chainmail", "Full Dragonscale", "Full Leather", "Full Plate", "Full Ringmail", "Full Scale Armour", "Full Wyrmscale", "General's Brigandine", "Gladiator Plate", "Glorious Leather", "Glorious Plate", "Golden Mantle", "Golden Plate", "Holy Chainmail", "Hussar Brigandine", "Infantry Brigandine", "Lacquered Garb", "Latticed Ringmail", "Light Brigandine", "Lordly Plate", "Loricated Ringmail", "Mage's Vestment", "Majestic Plate", "Necromancer Silks", "Occultist's Vestment", "Oiled Coat", "Oiled Vest", "Ornate Ringmail", "Padded Jacket", "Padded Vest", "Plate Vest", "Quilted Jacket", "Ringmail Coat", "Sacrificial Garb", "Sadist Garb", "Sage's Robe", "Saint's Hauberk", "Saintly Chainmail", "Savant's Robe", "Scale Doublet", "Scale Vest", "Scarlet Raiment", "Scholar's Robe", "Sentinel Jacket", "Shabby Jerkin", "Sharkskin Tunic", "Silk Robe", "Silken Garb", "Silken Vest", "Silken Wrap", "Simple Robe", "Sleek Coat", "Soldier's Brigandine", "Spidersilk Robe", "Strapped Leather", "Sun Leather", "Sun Plate", "Thief's Garb", "Triumphant Lamellar", "Vaal Regalia", "Varnished Coat", "War Plate", "Waxed Garb", "Widowsilk Robe", "Wild Leather", "Wyrmscale Doublet", "Zodiac Leather", "Ancestral Club", "Auric Mace", "Barbed Club", "Battle Hammer", "Behemoth Mace", "Bladed Mace", "Ceremonial Mace", "Dragon Mace", "Dream Mace", "Driftwood Club", "Flanged Mace", "Gavel", "Legion Hammer", "Nightmare Mace", "Ornate Mace", "Pernarch", "Petrified Club", "Phantom Mace", "Rock Breaker", "Spiked Club", "Stone Hammer", "Tenderizer", "Tribal Club", "War Hammer", "Wyrm Mace", "Agate Amulet", "Amber Amulet", "Ashscale Talisman", "Avian Twins Talisman", "Black Maw Talisman", "Blue Pearl Amulet", "Bonespire Talisman", "Breakrib Talisman", "Chrysalis Talisman", "Citrine Amulet", "Clutching Talisman", "Coral Amulet", "Deadhand Talisman", "Deep One Talisman", "Fangjaw Talisman", "Gold Amulet", "Greatwolf Talisman", "Hexclaw Talisman", "Horned Talisman", "Jade Amulet", "Jet Amulet", "Jet Amulet", "Lapis Amulet", "Lone Antler Talisman", "Longtooth Talisman", "Mandible Talisman", "Marble Amulet", "Monkey Paw Talisman", "Monkey Twins Talisman", "Onyx Amulet", "Paua Amulet", "Primal Skull Talisman", "Rot Head Talisman", "Rotfeather Talisman", "Ruby Amulet", "Spinefuse Talisman", "Splitnewt Talisman", "Three Hands Talisman", "Three Rat Talisman", "Turquoise Amulet", "Undying Flesh Talisman", "Wereclaw Talisman", "Writhing Talisman", "Brass Maul", "Colossus Mallet", "Coronal Maul", "Dread Maul", "Driftwood Maul", "Fright Maul", "Great Mallet", "Imperial Maul", "Jagged Maul", "Karui Maul", "Mallet", "Meatgrinder", "Morning Star", "Piledriver", "Plated Maul", "Sledgehammer", "Solar Maul", "Spiny Maul", "Steelhead", "Terror Maul", "Totemic Maul", "Tribal Maul", "Abyssal Sceptre", "Blood Sceptre", "Bronze Sceptre", "Carnal Sceptre", "Crystal Sceptre", "Darkwood Sceptre", "Driftwood Sceptre", "Grinning Fetish", "Horned Sceptre", "Iron Sceptre", "Karui Sceptre", "Lead Sceptre", "Ochre Sceptre", "Opal Sceptre", "Platinum Sceptre", "Quartz Sceptre", "Ritual Sceptre", "Royal Sceptre", "Sambar Sceptre", "Sekhem", "Shadow Sceptre", "Stag Sceptre", "Tyrant's Sekhem", "Vaal Sceptre", "Void Sceptre", "Abyssal Axe", "Dagger Axe", "Despot Axe", "Double Axe", "Ezomyte Axe", "Fleshripper", "Gilded Axe", "Headsman Axe", "Jade Chopper", "Jasper Chopper", "Karui Chopper", "Labrys", "Noble Axe", "Poleaxe", "Shadow Axe", "Stone Axe", "Sundering Axe", "Talon Axe", "Timber Axe", "Vaal Axe", "Void Axe", "Woodsplitter", "Bastard Sword", "Butcher Sword", "Corroded Blade", "Curved Blade", "Engraved Greatsword", "Etched Greatsword", "Exquisite Blade", "Ezomyte Blade", "Footman Sword", "Headman's Sword", "Highland Blade", "Infernal Sword", "Lion Sword", "Lithe Blade", "Longsword", "Ornate Sword", "Reaver Sword", "Spectral Sword", "Tiger Sword", "Two-Handed Sword", "Vaal Greatsword", "Wraith Sword", "Ghastly Eye Jewel", "Hypnotic Eye Jewel", "Murderous Eye Jewel", "Searching Eye Jewel", "Cobalt Jewel", "Crimson Jewel", "Prismatic Jewel", "Viridian Jewel", "Assassin Bow", "Bone Bow", "Citadel Bow", "Composite Bow", "Compound Bow", "Crude Bow", "Death Bow", "Decimation Bow", "Decurve Bow", "Golden Flame", "Grove Bow", "Harbinger Bow", "Highborn Bow", "Imperial Bow", "Ivory Bow", "Long Bow", "Maraketh Bow", "Ranger Bow", "Recurve Bow", "Reflex Bow", "Royal Bow", "Short Bow", "Sniper Bow", "Spine Bow", "Steelwood Bow", "Thicket Bow", "Ambush Mitts", "Ancient Gauntlets", "Antique Gauntlets", "Arcanist Gloves", "Assassin's Mitts", "Bronze Gauntlets", "Bronzescale Gauntlets", "Carnal Mitts", "Chain Gloves", "Clasped Mitts", "Conjurer Gloves", "Crusader Gloves", "Deerskin Gloves", "Dragonscale Gauntlets", "Eelskin Gloves", "Embroidered Gloves", "Fingerless Silk Gloves", "Fishscale Gauntlets", "Goathide Gloves", "Golden Bracers", "Goliath Gauntlets", "Gripped Gloves", "Hydrascale Gauntlets", "Iron Gauntlets", "Ironscale Gauntlets", "Legion Gloves", "Mesh Gloves", "Murder Mitts", "Nubuck Gloves", "Plated Gauntlets", "Rawhide Gloves", "Ringmail Gloves", "Riveted Gloves", "Samite Gloves", "Satin Gloves", "Serpentscale Gauntlets", "Shagreen Gloves", "Sharkskin Gloves", "Silk Gloves", "Slink Gloves", "Soldier Gloves", "Sorcerer Gloves", "Spiked Gloves", "Stealth Gloves", "Steel Gauntlets", "Steelscale Gauntlets", "Strapped Mitts", "Titan Gauntlets", "Trapper Mitts", "Vaal Gauntlets", "Velvet Gloves", "Wool Gloves", "Wrapped Mitts", "Wyrmscale Gauntlets", "Zealot Gloves", "Blunt Arrow Quiver", "Broadhead Arrow Quiver", "Conductive Quiver", "Cured Quiver", "Fire Arrow Quiver", "Heavy Quiver", "Light Quiver", "Penetrating Arrow Quiver", "Rugged Quiver", "Serrated Arrow Quiver", "Sharktooth Arrow Quiver", "Spike-Point Arrow Quiver", "Two-Point Arrow Quiver", "Alder Spiked Shield", "Alloyed Spiked Shield", "Ancient Spirit Shield", "Angelic Kite Shield", "Archon Kite Shield", "Baroque Round Shield", "Battle Buckler", "Bone Spirit Shield", "Branded Kite Shield", "Brass Spirit Shield", "Bronze Tower Shield", "Buckskin Tower Shield", "Burnished Spiked Shield", "Cardinal Round Shield", "Cedar Tower Shield", "Ceremonial Kite Shield", "Champion Kite Shield", "Chiming Spirit Shield", "Colossal Tower Shield", "Compound Spiked Shield", "Copper Tower Shield", "Corroded Tower Shield", "Corrugated Buckler", "Crested Tower Shield", "Crimson Round Shield", "Crusader Buckler", "Driftwood Spiked Shield", "Ebony Tower Shield", "Elegant Round Shield", "Enameled Buckler", "Etched Kite Shield", "Ezomyte Spiked Shield", "Ezomyte Tower Shield", "Fir Round Shield", "Fossilised Spirit Shield", "Gilded Buckler", "Girded Tower Shield", "Goathide Buckler", "Golden Buckler", "Hammered Buckler", "Harmonic Spirit Shield", "Imperial Buckler", "Ironwood Buckler", "Ivory Spirit Shield", "Jingling Spirit Shield", "Lacewood Spirit Shield", "Lacquered Buckler", "Laminated Kite Shield", "Layered Kite Shield", "Linden Kite Shield", "Mahogany Tower Shield", "Maple Round Shield", "Mirrored Spiked Shield", "Mosaic Kite Shield", "Oak Buckler", "Ornate Spiked Shield", "Painted Buckler", "Painted Tower Shield", "Pine Buckler", "Pinnacle Tower Shield", "Plank Kite Shield", "Polished Spiked Shield", "Rawhide Tower Shield", "Redwood Spiked Shield", "Reinforced Kite Shield", "Reinforced Tower Shield", "Rotted Round Shield", "Scarlet Round Shield", "Shagreen Tower Shield", "Sovereign Spiked Shield", "Spiked Bundle", "Spiked Round Shield", "Spiny Round Shield", "Splendid Round Shield", "Splintered Tower Shield", "Steel Kite Shield", "Studded Round Shield", "Supreme Spiked Shield", "Tarnished Spirit Shield", "Teak Round Shield", "Thorium Spirit Shield", "Titanium Spirit Shield", "Twig Spirit Shield", "Vaal Buckler", "Vaal Spirit Shield", "Walnut Spirit Shield", "War Buckler", "Yew Spirit Shield", "Ambusher", "Boot Blade", "Boot Knife", "Butcher Knife", "Carving Knife", "Copper Kris", "Demon Dagger", "Ezomyte Dagger", "Fiend Dagger", "Flaying Knife", "Glass Shank", "Golden Kris", "Gutting Knife", "Imp Dagger", "Imperial Skean", "Platinum Kris", "Poignard", "Prong Dagger", "Royal Skean", "Sai", "Skean", "Skinning Knife", "Slaughter Knife", "Stiletto", "Trisula", "Carved Wand", "Crystal Wand", "Demon's Horn", "Driftwood Wand", "Engraved Wand", "Faun's Horn", "Goat's Horn", "Heathen Wand", "Imbued Wand", "Omen Wand", "Opal Wand", "Pagan Wand", "Profane Wand", "Prophecy Wand", "Quartz Wand", "Sage Wand", "Serpent Wand", "Spiraled Wand", "Tornado Wand", "Ambush Boots", "Ancient Greaves", "Antique Greaves", "Arcanist Slippers", "Assassin's Boots", "Bronzescale Boots", "Carnal Boots", "Chain Boots", "Clasped Boots", "Conjurer Boots", "Crusader Boots", "Deerskin Boots", "Dragonscale Boots", "Eelskin Boots", "Goathide Boots", "Golden Caligae", "Goliath Greaves", "Hydrascale Boots", "Iron Greaves", "Ironscale Boots", "Leatherscale Boots", "Legion Boots", "Mesh Boots", "Murder Boots", "Nubuck Boots", "Plated Greaves", "Rawhide Boots", "Reinforced Greaves", "Ringmail Boots", "Riveted Boots", "Samite Slippers", "Satin Slippers", "Scholar Boots", "Serpentscale Boots", "Shackled Boots", "Shagreen Boots", "Sharkskin Boots", "Silk Slippers", "Slink Boots", "Soldier Boots", "Sorcerer Boots", "Stealth Boots", "Steel Greaves", "Steelscale Boots", "Strapped Boots", "Titan Greaves", "Trapper Boots", "Two-Toned Boots", "Vaal Greaves", "Velvet Slippers", "Wool Shoes", "Wrapped Boots", "Wyrmscale Boots", "Zealot Boots", "Amethyst Ring", "Breach Ring", "Coral Ring", "Diamond Ring", "Gold Ring", "Golden Hoop", "Iron Ring", "Moonstone Ring", "Opal Ring", "Paua Ring", "Prismatic Ring", "Ruby Ring", "Sapphire Ring", "Steel Ring", "Topaz Ring", "Two-Stone Ring", "Unset Ring", "Chain Belt", "Cloth Belt", "Crystal Belt", "Golden Obi", "Heavy Belt", "Leather Belt", "Rustic Sash", "Studded Belt", "Vanguard Belt", "Coiled Staff", "Crescent Staff", "Eclipse Staff", "Ezomyte Staff", "Foul Staff", "Gnarled Branch", "Highborn Staff", "Imperial Staff", "Iron Staff", "Judgement Staff", "Lathi", "Long Staff", "Maelstr\u00f6m Staff", "Military Staff", "Moon Staff", "Primitive Staff", "Primordial Staff", "Quarterstaff", "Royal Staff", "Serpentine Staff", "Vile Staff", "Woodful Staff"];
+    //taken from poe.trade source on 2/18/2020
+    this.items_types = {"Helmet": ["Aventail Helmet", "Barbute Helmet", "Battered Helm", "Bone Circlet", "Bone Helmet", "Callous Mask", "Close Helmet", "Cone Helmet", "Crusader Helmet", "Deicide Mask", "Eternal Burgonet", "Ezomyte Burgonet", "Fencer Helm", "Festival Mask", "Fluted Bascinet", "Gilded Sallet", "Gladiator Helmet", "Golden Mask", "Golden Wreath", "Great Crown", "Great Helmet", "Harlequin Mask", "Hubris Circlet", "Hunter Hood", "Iron Circlet", "Iron Hat", "Iron Mask", "Lacquered Helmet", "Leather Cap", "Leather Hood", "Lion Pelt", "Lunaris Circlet", "Magistrate Crown", "Mind Cage", "Necromancer Circlet", "Nightmare Bascinet", "Noble Tricorne", "Pig-Faced Bascinet", "Plague Mask", "Praetor Crown", "Prophet Crown", "Raven Mask", "Reaver Helmet", "Regicide Mask", "Royal Burgonet", "Rusted Coif", "Sallet", "Samite Helmet", "Scare Mask", "Secutor Helm", "Siege Helmet", "Silken Hood", "Sinner Tricorne", "Solaris Circlet", "Soldier Helmet", "Steel Circlet", "Torture Cage", "Tribal Circlet", "Tricorne", "Ursine Pelt", "Vaal Mask", "Vine Circlet", "Visored Sallet", "Wolf Pelt", "Zealot Helmet"], "One Hand Axe": ["Arming Axe", "Boarding Axe", "Broad Axe", "Butcher Axe", "Ceremonial Axe", "Chest Splitter", "Cleaver", "Decorative Axe", "Engraved Hatchet", "Etched Hatchet", "Infernal Axe", "Jade Hatchet", "Jasper Axe", "Karui Axe", "Reaver Axe", "Royal Axe", "Runic Hatchet", "Rusted Hatchet", "Siege Axe", "Spectral Axe", "Tomahawk", "Vaal Hatchet", "War Axe", "Wraith Axe", "Wrist Chopper"], "Flask": ["Amethyst Flask", "Aquamarine Flask", "Basalt Flask", "Bismuth Flask", "Colossal Hybrid Flask", "Colossal Life Flask", "Colossal Mana Flask", "Diamond Flask", "Divine Life Flask", "Divine Mana Flask", "Eternal Life Flask", "Eternal Mana Flask", "Giant Life Flask", "Giant Mana Flask", "Grand Life Flask", "Grand Mana Flask", "Granite Flask", "Greater Life Flask", "Greater Mana Flask", "Hallowed Hybrid Flask", "Hallowed Life Flask", "Hallowed Mana Flask", "Jade Flask", "Large Hybrid Flask", "Large Life Flask", "Large Mana Flask", "Medium Hybrid Flask", "Medium Life Flask", "Medium Mana Flask", "Quartz Flask", "Quicksilver Flask", "Ruby Flask", "Sacred Hybrid Flask", "Sacred Life Flask", "Sacred Mana Flask", "Sanctified Life Flask", "Sanctified Mana Flask", "Sapphire Flask", "Silver Flask", "Small Hybrid Flask", "Small Life Flask", "Small Mana Flask", "Stibnite Flask", "Sulphur Flask", "Topaz Flask"], "Fishing Rods": ["Fishing Rod"], "One Hand Sword": ["Ancient Sword", "Antique Rapier", "Apex Rapier", "Baselard", "Basket Rapier", "Battered Foil", "Battle Sword", "Broad Sword", "Burnished Foil", "Charan's Sword", "Copper Sword", "Corsair Sword", "Courtesan Sword", "Cutlass", "Dragonbone Rapier", "Dragoon Sword", "Dusk Blade", "Elder Sword", "Elegant Foil", "Elegant Sword", "Estoc", "Eternal Sword", "Fancy Foil", "Gemstone Sword", "Gladius", "Graceful Sword", "Grappler", "Harpy Rapier", "Hook Sword", "Jagged Foil", "Jewelled Foil", "Legion Sword", "Midnight Blade", "Pecoraro", "Primeval Rapier", "Rusted Spike", "Rusted Sword", "Sabre", "Serrated Foil", "Smallsword", "Spiraled Foil", "Tempered Foil", "Thorn Rapier", "Tiger Hook", "Twilight Blade", "Vaal Blade", "Vaal Rapier", "Variscite Blade", "War Sword", "Whalebone Rapier", "Wyrmbone Rapier"], "Breach": ["Ancient Reliquary Key", "Blessing of Chayula", "Blessing of Esh", "Blessing of Tul", "Blessing of Uul-Netol", "Blessing of Xoph", "Chayula's Breachstone", "Esh's Breachstone", "Splinter of Chayula", "Splinter of Esh", "Splinter of Tul", "Splinter of Uul-Netol", "Splinter of Xoph", "Timeworn Reliquary Key", "Tul's Breachstone", "Uul-Netol's Breachstone", "Xoph's Breachstone"], "Body Armour": ["Arena Plate", "Assassin's Garb", "Astral Plate", "Battle Lamellar", "Battle Plate", "Blood Raiment", "Bone Armour", "Bronze Plate", "Buckskin Tunic", "Cabalist Regalia", "Carnal Armour", "Chain Hauberk", "Chainmail Doublet", "Chainmail Tunic", "Chainmail Vest", "Chestplate", "Colosseum Plate", "Commander's Brigandine", "Conjurer's Vestment", "Conquest Chainmail", "Copper Plate", "Coronal Leather", "Crimson Raiment", "Crusader Chainmail", "Crusader Plate", "Crypt Armour", "Cutthroat's Garb", "Desert Brigandine", "Destiny Leather", "Destroyer Regalia", "Devout Chainmail", "Dragonscale Doublet", "Eelskin Tunic", "Elegant Ringmail", "Exquisite Leather", "Field Lamellar", "Frontier Leather", "Full Chainmail", "Full Dragonscale", "Full Leather", "Full Plate", "Full Ringmail", "Full Scale Armour", "Full Wyrmscale", "General's Brigandine", "Gladiator Plate", "Glorious Leather", "Glorious Plate", "Golden Mantle", "Golden Plate", "Holy Chainmail", "Hussar Brigandine", "Infantry Brigandine", "Lacquered Garb", "Latticed Ringmail", "Light Brigandine", "Lordly Plate", "Loricated Ringmail", "Mage's Vestment", "Majestic Plate", "Necromancer Silks", "Occultist's Vestment", "Oiled Coat", "Oiled Vest", "Ornate Ringmail", "Padded Jacket", "Padded Vest", "Plate Vest", "Quilted Jacket", "Ringmail Coat", "Sacrificial Garb", "Sadist Garb", "Sage's Robe", "Saint's Hauberk", "Saintly Chainmail", "Savant's Robe", "Scale Doublet", "Scale Vest", "Scarlet Raiment", "Scholar's Robe", "Sentinel Jacket", "Shabby Jerkin", "Sharkskin Tunic", "Silk Robe", "Silken Garb", "Silken Vest", "Silken Wrap", "Simple Robe", "Sleek Coat", "Soldier's Brigandine", "Spidersilk Robe", "Strapped Leather", "Sun Leather", "Sun Plate", "Thief's Garb", "Triumphant Lamellar", "Vaal Regalia", "Varnished Coat", "War Plate", "Waxed Garb", "Widowsilk Robe", "Wild Leather", "Wyrmscale Doublet", "Zodiac Leather"], "Map": ["Abyss Map", "Academy Map", "Acid Caverns Map", "Acid Lakes Map", "Alleyways Map", "Ancient City Map", "Arachnid Nest Map", "Arachnid Tomb Map", "Arcade Map", "Arena Map", "Arid Lake Map", "Armoury Map", "Arsenal Map", "Ashen Wood Map", "Atoll Map", "Barrows Map", "Basilica Map", "Bazaar Map", "Beach Map", "Beacon Map", "Belfry Map", "Bog Map", "Bone Crypt Map", "Burial Chambers Map", "Cage Map", "Caldera Map", "Canyon Map", "Carcass Map", "Castle Ruins Map", "Catacombs Map", "Cavern Map", "Cells Map", "Cemetery Map", "Channel Map", "Chateau Map", "City Square Map", "Colonnade Map", "Colosseum Map", "Conservatory Map", "Coral Ruins Map", "Core Map", "Courthouse Map", "Courtyard Map", "Coves Map", "Crater Map", "Crematorium Map", "Crimson Temple Map", "Crypt Map", "Crystal Ore Map", "Cursed Crypt Map", "Dark Forest Map", "Defiled Cathedral Map", "Desert Map", "Desert Spring Map", "Dig Map", "Dunes Map", "Dungeon Map", "Estuary Map", "Excavation Map", "Factory Map", "Fields Map", "Flooded Mine Map", "Forge of the Phoenix Map", "Fungal Hollow Map", "Gardens Map", "Geode Map", "Ghetto Map", "Glacier Map", "Gorge Map", "Graveyard Map", "Grotto Map", "Harbinger Map", "Haunted Mansion Map", "High Gardens Map", "Iceberg Map", "Infested Valley Map", "Ivory Temple Map", "Jungle Valley Map", "Laboratory Map", "Lair Map", "Lair of the Hydra Map", "Lava Chamber Map", "Lava Chambers Map", "Lava Lake Map", "Leyline Map", "Lighthouse Map", "Lookout Map", "Malformation Map", "Marshes Map", "Mausoleum Map", "Maze Map", "Maze of the Minotaur Map", "Mesa Map", "Mineral Pools Map", "Moon Temple Map", "Mud Geyser Map", "Museum Map", "Necropolis Map", "Oasis Map", "Orchard Map", "Overgrown Ruin Map", "Overgrown Shrine Map", "Palace Map", "Park Map", "Pen Map", "Peninsula Map", "Phantasmagoria Map", "Pier Map", "Pit Map", "Pit of the Chimera Map", "Plateau Map", "Plaza Map", "Port Map", "Precinct Map", "Primordial Blocks Map", "Primordial Pool Map", "Promenade Map", "Quarry Map", "Racecourse Map", "Ramparts Map", "Reef Map", "Relic Chambers Map", "Residence Map", "Scriptorium Map", "Sepulchre Map", "Sewer Map", "Shaped Academy Map", "Shaped Acid Lakes Map", "Shaped Arachnid Nest Map", "Shaped Arachnid Tomb Map", "Shaped Arcade Map", "Shaped Arena Map", "Shaped Arid Lake Map", "Shaped Armoury Map", "Shaped Arsenal Map", "Shaped Ashen Wood Map", "Shaped Atoll Map", "Shaped Barrows Map", "Shaped Beach Map", "Shaped Bog Map", "Shaped Burial Chambers Map", "Shaped Canyon Map", "Shaped Castle Ruins Map", "Shaped Catacombs Map", "Shaped Cavern Map", "Shaped Cells Map", "Shaped Cemetery Map", "Shaped Channel Map", "Shaped Colonnade Map", "Shaped Courtyard Map", "Shaped Coves Map", "Shaped Crypt Map", "Shaped Crystal Ore Map", "Shaped Desert Map", "Shaped Dunes Map", "Shaped Dungeon Map", "Shaped Factory Map", "Shaped Ghetto Map", "Shaped Graveyard Map", "Shaped Grotto Map", "Shaped Jungle Valley Map", "Shaped Malformation Map", "Shaped Marshes Map", "Shaped Mesa Map", "Shaped Mud Geyser Map", "Shaped Museum Map", "Shaped Oasis Map", "Shaped Orchard Map", "Shaped Overgrown Shrine Map", "Shaped Peninsula Map", "Shaped Phantasmagoria Map", "Shaped Pier Map", "Shaped Pit Map", "Shaped Port Map", "Shaped Primordial Pool Map", "Shaped Promenade Map", "Shaped Quarry Map", "Shaped Racecourse Map", "Shaped Ramparts Map", "Shaped Reef Map", "Shaped Sewer Map", "Shaped Shore Map", "Shaped Spider Forest Map", "Shaped Spider Lair Map", "Shaped Strand Map", "Shaped Temple Map", "Shaped Terrace Map", "Shaped Thicket Map", "Shaped Tower Map", "Shaped Tropical Island Map", "Shaped Underground River Map", "Shaped Vaal City Map", "Shaped Vaal Pyramid Map", "Shaped Villa Map", "Shaped Waste Pool Map", "Shaped Wharf Map", "Shipyard Map", "Shore Map", "Shrine Map", "Siege Map", "Spider Forest Map", "Spider Lair Map", "Springs Map", "Strand Map", "Sulphur Vents Map", "Sulphur Wastes Map", "Summit Map", "Sunken City Map", "Temple Map", "Terrace Map", "Thicket Map", "Torture Chamber Map", "Tower Map", "Toxic Sewer Map", "Tribunal Map", "Tropical Island Map", "Underground River Map", "Underground Sea Map", "Vaal City Map", "Vaal Pyramid Map", "Vaal Temple Map", "Vault Map", "Villa Map", "Volcano Map", "Waste Pool Map", "Wasteland Map", "Waterways Map", "Wharf Map"], "One Hand Mace": ["Ancestral Club", "Auric Mace", "Barbed Club", "Battle Hammer", "Behemoth Mace", "Bladed Mace", "Ceremonial Mace", "Dragon Mace", "Dream Mace", "Driftwood Club", "Flanged Mace", "Gavel", "Legion Hammer", "Nightmare Mace", "Ornate Mace", "Pernarch", "Petrified Club", "Phantom Mace", "Rock Breaker", "Spiked Club", "Stone Hammer", "Tenderizer", "Tribal Club", "War Hammer", "Wyrm Mace"], "Oil": ["Amber Oil", "Azure Oil", "Black Oil", "Clear Oil", "Crimson Oil", "Golden Oil", "Opalescent Oil", "Sepia Oil", "Silver Oil", "Teal Oil", "Verdant Oil", "Violet Oil"], "Socketed Currency": ["Aberrant Fossil", "Aetheric Fossil", "Bloodstained Fossil", "Bound Fossil", "Corroded Fossil", "Dense Fossil", "Enchanted Fossil", "Encrusted Fossil", "Faceted Fossil", "Fractured Fossil", "Frigid Fossil", "Gilded Fossil", "Glyphic Fossil", "Hollow Fossil", "Jagged Fossil", "Lucent Fossil", "Metallic Fossil", "Perfect Fossil", "Prismatic Fossil", "Pristine Fossil", "Sanctified Fossil", "Scorched Fossil", "Serrated Fossil", "Shuddering Fossil", "Tangled Fossil"], "Quiver": ["Blunt Arrow Quiver", "Broadhead Arrow Quiver", "Conductive Quiver", "Cured Quiver", "Fire Arrow Quiver", "Heavy Quiver", "Light Quiver", "Ornate Quiver", "Penetrating Arrow Quiver", "Rugged Quiver", "Serrated Arrow Quiver", "Sharktooth Arrow Quiver", "Spike-Point Arrow Quiver", "Two-Point Arrow Quiver"], "Beast": [], "Two Hand Mace": ["Brass Maul", "Colossus Mallet", "Coronal Maul", "Dread Maul", "Driftwood Maul", "Fright Maul", "Great Mallet", "Imperial Maul", "Jagged Maul", "Karui Maul", "Mallet", "Meatgrinder", "Morning Star", "Piledriver", "Plated Maul", "Sledgehammer", "Solar Maul", "Spiny Maul", "Steelhead", "Terror Maul", "Totemic Maul", "Tribal Maul"], "Sceptre": ["Abyssal Sceptre", "Blood Sceptre", "Bronze Sceptre", "Carnal Sceptre", "Crystal Sceptre", "Darkwood Sceptre", "Driftwood Sceptre", "Grinning Fetish", "Horned Sceptre", "Iron Sceptre", "Karui Sceptre", "Lead Sceptre", "Ochre Sceptre", "Opal Sceptre", "Platinum Sceptre", "Quartz Sceptre", "Ritual Sceptre", "Royal Sceptre", "Sambar Sceptre", "Sekhem", "Shadow Sceptre", "Stag Sceptre", "Tyrant's Sekhem", "Vaal Sceptre", "Void Sceptre"], "Two Hand Axe": ["Abyssal Axe", "Dagger Axe", "Despot Axe", "Double Axe", "Ezomyte Axe", "Fleshripper", "Gilded Axe", "Headsman Axe", "Jade Chopper", "Jasper Chopper", "Karui Chopper", "Labrys", "Noble Axe", "Poleaxe", "Shadow Axe", "Stone Axe", "Sundering Axe", "Talon Axe", "Timber Axe", "Vaal Axe", "Void Axe", "Woodsplitter"], "Prophecy": ["A Call into the Void", "A Firm Foothold", "A Forest of False Idols", "A Gracious Master", "A Master Seeks Help", "A Prodigious Hand", "A Regal Death", "A Valuable Combination", "A Whispered Prayer", "Abnormal Effulgence", "Against the Tide", "An Unseen Peril", "Anarchy's End I", "Anarchy's End II", "Anarchy's End III", "Anarchy's End IV", "Ancient Doom", "Ancient Rivalries I", "Ancient Rivalries II", "Ancient Rivalries III", "Ancient Rivalries IV", "Baptism by Death", "Beyond Sight I", "Beyond Sight II", "Beyond Sight III", "Beyond Sight IV", "Beyond Sight V", "Blood in the Eyes", "Blood of the Betrayed", "Bountiful Traps", "Brothers in Arms", "Cleanser of Sins", "Crash Test", "Crushing Squall", "Custodians of Silence", "Day of Sacrifice I", "Day of Sacrifice II", "Day of Sacrifice III", "Day of Sacrifice IV", "Deadly Rivalry I", "Deadly Rivalry II", "Deadly Rivalry III", "Deadly Rivalry IV", "Deadly Rivalry V", "Deadly Twins", "Defiled in the Scepter", "Delay Test", "Delay and Crash Test", "Dying Cry", "Echoes of Lost Love", "Echoes of Mutation", "Echoes of Witchcraft", "Ending the Torment", "Enter the Maelstr\u00f6m", "Erased from Memory", "Erasmus' Gift", "Fallow At Last", "Fated Connections", "Fear's Wide Reach", "Fire and Brimstone", "Fire and Ice", "Fire from the Sky", "Fire, Wood and Stone", "Flesh of the Beast", "Forceful Exorcism", "From Death Springs Life", "From The Void", "Gilded Within", "Golden Touch", "Graceful Flames", "Heart of the Fire", "Heavy Blows", "Hidden Reinforcements", "Hidden Vaal Pathways", "Holding the Bridge", "Hunter's Lesson", "Ice from Above", "In the Grasp of Corruption", "Kalandra's Craft", "Lasting Impressions", "Lightning Falls", "Living Fires", "Lost in the Pages", "Monstrous Treasure", "Mouth of Horrors", "Mysterious Invaders", "Nature's Resilience", "Nemesis of Greed", "Notched Flesh", "Overflowing Riches", "Path of Betrayal", "Plague of Frogs", "Plague of Rats", "Pleasure and Pain", "Pools of Wealth", "Possessed Foe", "Power Magnified", "Rebirth", "Reforged Bonds", "Resistant to Change", "Risen Blood", "Roth's Legacy", "SHOULD NOT APPEAR", "Sanctum of Stone", "Severed Limbs", "Smothering Tendrils", "Soil, Worms and Blood", "Storm on the Horizon", "Storm on the Shore", "Strong as a Bull", "Thaumaturgical History I", "Thaumaturgical History II", "Thaumaturgical History III", "Thaumaturgical History IV", "The Aesthete's Spirit", "The Alchemist", "The Ambitious Bandit I", "The Ambitious Bandit II", "The Ambitious Bandit III", "The Apex Predator", "The Beautiful Guide", "The Beginning and the End", "The Black Stone I", "The Black Stone II", "The Black Stone III", "The Black Stone IV", "The Blacksmith", "The Blessing", "The Bloody Flowers Redux", "The Bowstring's Music", "The Brothers of Necromancy", "The Brutal Enforcer", "The Child of Lunaris", "The Corrupt", "The Cursed Choir", "The Dream Trial", "The Dreamer's Dream", "The Eagle's Cry", "The Emperor's Trove", "The Feral Lord I", "The Feral Lord II", "The Feral Lord III", "The Feral Lord IV", "The Feral Lord V", "The Flayed Man", "The Flow of Energy", "The Forgotten Garrison", "The Forgotten Soldiers", "The Fortune Teller's Collection", "The Four Feral Exiles", "The God of Misfortune", "The Hardened Armour", "The Hollow Pledge", "The Hungering Swarm", "The Invader", "The Jeweller's Touch", "The Karui Rebellion", "The King and the Brambles", "The King's Path", "The Lady in Black", "The Last Watch", "The Lost Maps", "The Lost Undying", "The Misunderstood Queen", "The Mysterious Gift", "The Nest", "The Pair", "The Petrified", "The Pirate's Den", "The Plaguemaw I", "The Plaguemaw II", "The Plaguemaw III", "The Plaguemaw IV", "The Plaguemaw V", "The Prison Guard", "The Prison Key", "The Queen's Vaults", "The Scout", "The Servant's Heart", "The Sharpened Blade", "The Silverwood", "The Singular Spirit", "The Sinner's Stone", "The Snuffed Flame", "The Soulless Beast", "The Spread of Corruption", "The Stockkeeper", "The Sword King's Passion", "The Trembling Earth", "The Twins", "The Unbreathing Queen I", "The Unbreathing Queen II", "The Unbreathing Queen III", "The Unbreathing Queen IV", "The Unbreathing Queen V", "The Undead Brutes", "The Undead Storm", "The Vanguard", "The Walking Mountain", "The Ward's Ward", "The Warmongers I", "The Warmongers II", "The Warmongers III", "The Warmongers IV", "The Watcher's Watcher", "The Wealthy Exile", "Through the Mirage", "Touched by Death", "Touched by the Wind", "Trash to Treasure", "Twice Enchanted", "Unbearable Whispers I", "Unbearable Whispers II", "Unbearable Whispers III", "Unbearable Whispers IV", "Unbearable Whispers V", "Undead Uprising", "Unnatural Energy", "Vaal Invasion", "Vaal Winds", "Visions of the Drowned", "Vital Transformation", "Waiting in Ambush", "Weeping Death", "Wind and Thunder", "Winter's Mournful Melodies"], "Gem": ["Abyssal Cry", "Added Chaos Damage", "Added Cold Damage", "Added Fire Damage", "Added Lightning Damage", "Additional Accuracy", "Advanced Traps Support", "Ancestral Call Support", "Ancestral Protector", "Ancestral Warchief", "Anger", "Animate Guardian", "Animate Weapon", "Arc", "Arcane Surge Support", "Arctic Armour", "Arctic Breath", "Armageddon Brand", "Arrow Nova Support", "Artillery Ballista", "Assassin's Mark", "Awakened Added Chaos Damage Support", "Awakened Added Cold Damage Support", "Awakened Added Fire Damage Support", "Awakened Added Lightning Damage Support", "Awakened Ancestral Call Support", "Awakened Arrow Nova Support", "Awakened Blasphemy Support", "Awakened Brutality Support", "Awakened Burning Damage Support", "Awakened Cast On Critical Strike Support", "Awakened Cast While Channelling Support", "Awakened Chain Support", "Awakened Cold Penetration Support", "Awakened Controlled Destruction Support", "Awakened Curse On Hit Support", "Awakened Deadly Ailments Support", "Awakened Elemental Damage With Attacks Support", "Awakened Elemental Focus Support", "Awakened Fire Penetration Support", "Awakened Fork Support", "Awakened Generosity Support", "Awakened Greater Multiple Projectiles Support", "Awakened Increased Area Of Effect Support", "Awakened Lightning Penetration Support", "Awakened Melee Physical Damage Support", "Awakened Melee Splash Support", "Awakened Minion Damage Support", "Awakened Multistrike Support", "Awakened Spell Cascade Support", "Awakened Spell Echo Support", "Awakened Swift Affliction Support", "Awakened Unbound Ailments Support", "Awakened Unleash Support", "Awakened Vicious Projectiles Support", "Awakened Void Manipulation Support", "Ball Lightning", "Ball Lightning", "Ballista Totem Support", "Bane", "Barrage", "Barrage Support", "Bear Trap", "Berserk", "Blade Flurry", "Blade Vortex", "Bladefall", "Bladestorm", "Blasphemy", "Blast Rain", "Blastchain Mine Support", "Blight", "Blind", "Blink Arrow", "Block Chance Reduction", "Blood Magic", "Blood Rage", "Blood and Sand", "Bloodlust", "Bodyswap", "Bone Offering", "Bonechill Support", "Brand Recall", "Brutality Support", "Burning Arrow", "Burning Damage Support", "Cast On Critical Strike", "Cast on Death", "Cast on Melee Kill", "Cast when Damage Taken", "Cast when Stunned", "Cast while Channelling Support", "Caustic Arrow", "Chain", "Chance to Bleed Support", "Chance to Flee", "Chance to Ignite", "Charged Dash", "Charged Mines Support", "Charged Traps Support", "Clarity", "Cleave", "Close Combat Support", "Cluster Traps", "Cobra Lash", "Cold Penetration", "Cold Snap", "Cold to Fire", "Concentrated Effect", "Conductivity", "Consecrated Path", "Contagion", "Controlled Destruction", "Conversion Trap", "Convocation", "Cremation", "Culling Strike", "Curse On Hit", "Cyclone", "Damage on Full Life Support", "Dark Pact", "Dash", "Deadly Ailments Support", "Deathmark Support", "Decay Support", "Decoy Totem", "Desecrate", "Despair", "Determination", "Detonate Dead", "Detonate Mines", "Devouring Totem", "Discharge", "Discipline", "Divine Ire", "Dominating Blow", "Double Strike", "Dread Banner", "Dual Strike", "Earthquake", "Efficacy Support", "Elemental Army Support", "Elemental Damage with Attacks Support", "Elemental Focus", "Elemental Hit", "Elemental Proliferation", "Elemental Weakness", "Empower", "Endurance Charge on Melee Stun", "Enduring Cry", "Energy Leech Support", "Enfeeble", "Enhance", "Enlighten", "Ensnaring Arrow", "Essence Drain", "Ethereal Knives", "Explosive Arrow", "Explosive Trap", "Faster Attacks", "Faster Casting", "Faster Projectiles", "Feeding Frenzy Support", "Fire Penetration", "Fire Trap", "Fireball", "Firestorm", "Flame Dash", "Flame Surge", "Flame Totem", "Flameblast", "Flamethrower Trap", "Flammability", "Flesh Offering", "Flesh and Stone", "Flicker Strike", "Fork", "Fortify", "Freezing Pulse", "Frenzy", "Frost Blades", "Frost Bomb", "Frost Wall", "Frostbite", "Frostblink", "Frostbolt", "Generosity", "Glacial Cascade", "Glacial Hammer", "Grace", "Greater Multiple Projectiles", "Greater Volley Support", "Ground Slam", "Haste", "Hatred", "Heavy Strike", "Herald of Agony", "Herald of Ash", "Herald of Ice", "Herald of Purity", "Herald of Thunder", "High-Impact Mine Support", "Hypothermia", "Ice Bite", "Ice Crash", "Ice Nova", "Ice Shot", "Ice Spear", "Ice Trap", "Icicle Mine", "Ignite Proliferation Support", "Immolate Support", "Immortal Call", "Impale Support", "Incinerate", "Increased Area of Effect", "Increased Critical Damage", "Increased Critical Strikes", "Increased Duration", "Infernal Blow", "Infernal Legion Support", "Infused Channelling Support", "Innervate", "Inspiration Support", "Intensify Support", "Iron Grip", "Iron Will", "Item Quantity", "Item Rarity", "Kinetic Blast", "Knockback", "Lacerate", "Lancing Steel", "Leap Slam", "Less Duration", "Lesser Multiple Projectiles", "Lesser Poison Support", "Life Gain on Hit", "Life Leech", "Lightning Arrow", "Lightning Penetration", "Lightning Spire Trap", "Lightning Strike", "Lightning Tendrils", "Lightning Trap", "Lightning Warp", "Magma Orb", "Maim Support", "Malevolence", "Mana Leech", "Meat Shield Support", "Melee Physical Damage", "Melee Splash", "Minefield", "Minion Damage", "Minion Life", "Minion Speed", "Mirage Archer Support", "Mirror Arrow", "Molten Shell", "Molten Strike", "Multiple Totems Support", "Multiple Traps", "Multistrike", "Nightblade Support", "Onslaught Support", "Orb of Storms", "Perforate", "Pestilent Strike", "Phase Run", "Physical to Lightning", "Pierce", "Plague Bearer", "Poacher's Mark", "Point Blank", "Poison", "Portal", "Power Charge On Critical", "Power Siphon", "Precision", "Pride", "Projectile Weakness", "Pulverise Support", "Puncture", "Punishment", "Purifying Flame", "Purity of Elements", "Purity of Fire", "Purity of Ice", "Purity of Lightning", "Pyroclast Mine", "Rage Support", "Rain of Arrows", "Raise Spectre", "Raise Zombie", "Rallying Cry", "Ranged Attack Totem", "Reave", "Reckoning", "Rejuvenation Totem", "Righteous Fire", "Riposte", "Ruthless Support", "Scorching Ray", "Scourge Arrow", "Searing Bond", "Seismic Trap", "Shattering Steel", "Shield Charge", "Shock Nova", "Shockwave Support", "Shockwave Totem", "Shrapnel Ballista", "Shrapnel Shot", "Siege Ballista", "Siphoning Trap", "Slower Projectiles", "Smite", "Smoke Mine", "Soulrend", "Spark", "Spectral Shield Throw", "Spectral Throw", "Spell Cascade Support", "Spell Echo", "Spell Totem", "Spirit Offering", "Split Arrow", "Static Strike", "Steelskin", "Storm Barrier Support", "Storm Brand", "Storm Burst", "Storm Call", "Stormblast Mine", "Stun", "Summon Carrion Golem", "Summon Chaos Golem", "Summon Flame Golem", "Summon Holy Relic", "Summon Ice Golem", "Summon Lightning Golem", "Summon Phantasm on Kill Support", "Summon Raging Spirit", "Summon Skeletons", "Summon Skitterbots", "Summon Stone Golem", "Sunder", "Sweep", "Swift Affliction Support", "Swift Assembly Support", "Tectonic Slam", "Tempest Shield", "Temporal Chains", "Tornado Shot", "Toxic Rain", "Trap", "Trap Cooldown", "Trap and Mine Damage", "Unbound Ailments Support", "Unearth", "Unleash Support", "Vaal Ancestral Warchief", "Vaal Arc", "Vaal Blade Vortex", "Vaal Blight", "Vaal Breach", "Vaal Burning Arrow", "Vaal Clarity", "Vaal Cold Snap", "Vaal Cyclone", "Vaal Detonate Dead", "Vaal Discipline", "Vaal Double Strike", "Vaal Earthquake", "Vaal Fireball", "Vaal Flameblast", "Vaal Glacial Hammer", "Vaal Grace", "Vaal Ground Slam", "Vaal Haste", "Vaal Ice Nova", "Vaal Immortal Call", "Vaal Impurity of Fire", "Vaal Impurity of Ice", "Vaal Impurity of Lightning", "Vaal Lightning Strike", "Vaal Lightning Trap", "Vaal Lightning Warp", "Vaal Molten Shell", "Vaal Power Siphon", "Vaal Rain of Arrows", "Vaal Reave", "Vaal Righteous Fire", "Vaal Spark", "Vaal Spectral Throw", "Vaal Storm Call", "Vaal Summon Skeletons", "Vengeance", "Venom Gyre", "Vicious Projectiles Support", "Vigilant Strike", "Vile Toxins Support", "Viper Strike", "Vitality", "Void Manipulation", "Volatile Dead", "Volley Support", "Vortex", "Vulnerability", "War Banner", "Warlord's Mark", "Wave of Conviction", "Whirling Blades", "Wild Strike", "Winter Orb", "Wither", "Withering Step", "Withering Touch Support", "Wrath", "Zealotry"], "Two Hand Sword": ["Bastard Sword", "Butcher Sword", "Corroded Blade", "Curved Blade", "Engraved Greatsword", "Etched Greatsword", "Exquisite Blade", "Ezomyte Blade", "Footman Sword", "Headman's Sword", "Highland Blade", "Infernal Sword", "Lion Sword", "Lithe Blade", "Longsword", "Ornate Sword", "Reaver Sword", "Spectral Sword", "Tiger Sword", "Two-Handed Sword", "Vaal Greatsword", "Wraith Sword"], "Jewel": ["Cobalt Jewel", "Crimson Jewel", "Ghastly Eye Jewel", "Hypnotic Eye Jewel", "Murderous Eye Jewel", "Prismatic Jewel", "Searching Eye Jewel", "Viridian Jewel"], "Socketable Currency": ["Potent Alchemical Resonator", "Potent Chaotic Resonator", "Powerful Alchemical Resonator", "Powerful Chaotic Resonator", "Prime Alchemical Resonator", "Prime Chaotic Resonator", "Primitive Alchemical Resonator", "Primitive Chaotic Resonator"], "Timeless": ["Timeless Eternal Empire Emblem", "Timeless Eternal Empire Splinter", "Timeless Karui Emblem", "Timeless Karui Splinter", "Timeless Maraketh Emblem", "Timeless Maraketh Splinter", "Timeless Templar Emblem", "Timeless Templar Splinter", "Timeless Vaal Emblem", "Timeless Vaal Splinter"], "Bow": ["Assassin Bow", "Bone Bow", "Citadel Bow", "Composite Bow", "Compound Bow", "Crude Bow", "Death Bow", "Decimation Bow", "Decurve Bow", "Golden Flame", "Grove Bow", "Harbinger Bow", "Highborn Bow", "Imperial Bow", "Ivory Bow", "Long Bow", "Maraketh Bow", "Ranger Bow", "Recurve Bow", "Reflex Bow", "Royal Bow", "Short Bow", "Sniper Bow", "Spine Bow", "Steelwood Bow", "Thicket Bow"], "Incubator": ["Abyssal Incubator", "Cartographer's Incubator", "Celestial Armoursmith's Incubator", "Celestial Blacksmith's Incubator", "Celestial Jeweller's Incubator", "Decadent Incubator", "Diviner's Incubator", "Eldritch Incubator", "Enchanted Incubator", "Feral Incubator", "Fine Incubator", "Foreboding Incubator", "Fossilised Incubator", "Fragmented Incubator", "Gemcutter's Incubator", "Geomancer's Incubator", "Infused Incubator", "Mysterious Incubator", "Obscured Incubator", "Ornate Incubator", "Otherworldly Incubator", "Primal Incubator", "Singular Incubator", "Skittering Incubator", "Thaumaturge's Incubator", "Time-Lost Incubator", "Whispering Incubator"], "Gloves": ["Ambush Mitts", "Ancient Gauntlets", "Antique Gauntlets", "Arcanist Gloves", "Assassin's Mitts", "Bronze Gauntlets", "Bronzescale Gauntlets", "Carnal Mitts", "Chain Gloves", "Clasped Mitts", "Conjurer Gloves", "Crusader Gloves", "Deerskin Gloves", "Dragonscale Gauntlets", "Eelskin Gloves", "Embroidered Gloves", "Fingerless Silk Gloves", "Fishscale Gauntlets", "Goathide Gloves", "Golden Bracers", "Goliath Gauntlets", "Gripped Gloves", "Hydrascale Gauntlets", "Iron Gauntlets", "Ironscale Gauntlets", "Legion Gloves", "Mesh Gloves", "Murder Mitts", "Nubuck Gloves", "Plated Gauntlets", "Rawhide Gloves", "Ringmail Gloves", "Riveted Gloves", "Samite Gloves", "Satin Gloves", "Serpentscale Gauntlets", "Shagreen Gloves", "Sharkskin Gloves", "Silk Gloves", "Slink Gloves", "Soldier Gloves", "Sorcerer Gloves", "Spiked Gloves", "Stealth Gloves", "Steel Gauntlets", "Steelscale Gauntlets", "Strapped Mitts", "Titan Gauntlets", "Trapper Mitts", "Vaal Gauntlets", "Velvet Gloves", "Wool Gloves", "Wrapped Mitts", "Wyrmscale Gauntlets", "Zealot Gloves"], "Vaal Fragments": ["Divine Vessel", "Eber's Key", "Fragment of Constriction", "Fragment of Emptiness", "Fragment of Enslavement", "Fragment of Eradication", "Fragment of Knowledge", "Fragment of Purification", "Fragment of Shape", "Fragment of Terror", "Fragment of the Chimera", "Fragment of the Hydra", "Fragment of the Minotaur", "Fragment of the Phoenix", "Inya's Key", "Mortal Grief", "Mortal Hope", "Mortal Ignorance", "Mortal Rage", "Offering to the Goddess", "Sacrifice at Dawn", "Sacrifice at Dusk", "Sacrifice at Midnight", "Sacrifice at Noon", "Volkuur's Key", "Yriel's Key"], "Claw": ["Awl", "Blinder", "Cat's Paw", "Double Claw", "Eagle Claw", "Eye Gouger", "Fright Claw", "Gemini Claw", "Gouger", "Great White Claw", "Gut Ripper", "Hellion's Paw", "Imperial Claw", "Nailed Fist", "Noble Claw", "Prehistoric Claw", "Sharktooth Claw", "Sparkling Claw", "Terror Claw", "Thresher Claw", "Throat Stabber", "Tiger's Paw", "Timeworn Claw", "Twin Claw", "Vaal Claw"], "Amulet": ["Agate Amulet", "Amber Amulet", "Ashscale Talisman", "Avian Twins Talisman", "Black Maw Talisman", "Blue Pearl Amulet", "Bonespire Talisman", "Breakrib Talisman", "Chrysalis Talisman", "Citrine Amulet", "Clutching Talisman", "Coral Amulet", "Deadhand Talisman", "Deep One Talisman", "Fangjaw Talisman", "Gold Amulet", "Greatwolf Talisman", "Hexclaw Talisman", "Horned Talisman", "Jade Amulet", "Jet Amulet", "Jet Amulet", "Lapis Amulet", "Lone Antler Talisman", "Longtooth Talisman", "Mandible Talisman", "Marble Amulet", "Monkey Paw Talisman", "Monkey Twins Talisman", "Onyx Amulet", "Paua Amulet", "Primal Skull Talisman", "Rot Head Talisman", "Rotfeather Talisman", "Ruby Amulet", "Spinefuse Talisman", "Splitnewt Talisman", "Three Hands Talisman", "Three Rat Talisman", "Turquoise Amulet", "Undying Flesh Talisman", "Wereclaw Talisman", "Writhing Talisman"], "Divination Card": ["A Dab of Ink", "A Mother's Parting Gift", "Abandoned Wealth", "Akil's Prophecy", "Alluring Bounty", "Alone in the Darkness", "Anarchy's Price", "Arrogance of the Vaal", "Assassin's Favour", "Atziri's Arsenal", "Audacity", "Azyran's Reward", "Baited Expectations", "Beauty Through Death", "Birth of the Three", "Blessing of God", "Blind Venture", "Boon of Justice", "Boon of the First Ones", "Boundless Realms", "Bowyer's Dream", "Buried Treasure", "Burning Blood", "Call to the First Ones", "Cameria's Cut", "Cartographer's Delight", "Chaotic Disposition", "Coveted Possession", "Dark Dreams", "Dark Temptation", "Death", "Deathly Designs", "Demigod's Wager", "Destined to Crumble", "Dialla's Subjugation", "Divine Justice", "Doedre's Madness", "Dying Anguish", "Earth Drinker", "Echoes of Love", "Emperor of Purity", "Emperor's Luck", "Etched in Blood", "Forbidden Power", "Friendship", "Gemcutter's Promise", "Gift of the Gemling Queen", "Glimmer of Hope", "Grave Knowledge", "Harmony of Souls", "Her Mask", "Heterochromia", "Hope", "House of Mirrors", "Hubris", "Humility", "Hunter's Resolve", "Hunter's Reward", "Immortal Resolve", "Imperial Legacy", "Jack in the Box", "Lantador's Lost Love", "Last Hope", "Left to Fate", "Light and Truth", "Lingering Remnants", "Lost Worlds", "Loyalty", "Lucky Connections", "Lucky Deck", "Lysah's Respite", "Mawr Blaidd", "Merciless Armament", "Might is Right", "Mitts", "Monochrome", "More is Never Enough", "No Traces", "Nook's Crown", "Perfection", "Pride Before the Fall", "Pride of the First Ones", "Prosperity", "Rain Tempter", "Rain of Chaos", "Rats", "Rebirth", "Remembrance", "Sambodhi's Vow", "Scholar of the Seas", "Seven Years Bad Luck", "Shard of Fate", "Squandered Prosperity", "Struck by Lightning", "Succor of the Sinless", "The Admirer", "The Aesthete", "The Archmage's Right Hand", "The Arena Champion", "The Army of Blood", "The Artist", "The Avenger", "The Bargain", "The Battle Born", "The Beast", "The Betrayal", "The Blazing Fire", "The Body", "The Bones", "The Breach", "The Brittle Emperor", "The Cacophony", "The Calling", "The Carrion Crow", "The Cartographer", "The Cataclysm", "The Catalyst", "The Celestial Justicar", "The Celestial Stone", "The Chains that Bind", "The Chosen", "The Coming Storm", "The Conduit", "The Craving", "The Cursed King", "The Damned", "The Dapper Prodigy", "The Dark Mage", "The Darkest Dream", "The Deal", "The Deceiver", "The Deep Ones", "The Demon", "The Demoness", "The Devastator", "The Doctor", "The Doppelganger", "The Dragon", "The Dragon's Heart", "The Dreamer", "The Dreamland", "The Drunken Aristocrat", "The Encroaching Darkness", "The Endless Darkness", "The Endurance", "The Enlightened", "The Escape", "The Ethereal", "The Explorer", "The Eye of Terror", "The Eye of the Dragon", "The Fathomless Depths", "The Feast", "The Fiend", "The Fishmonger", "The Fletcher", "The Flora's Gift", "The Fool", "The Formless Sea", "The Forsaken", "The Fox", "The Gambler", "The Garish Power", "The Gemcutter", "The Gentleman", "The Gladiator", "The Golden Era", "The Hale Heart", "The Harvester", "The Hermit", "The Heroic Shot", "The Hoarder", "The Hunger", "The Immortal", "The Incantation", "The Innocent", "The Inoculated", "The Insatiable", "The Inventor", "The Iron Bard", "The Jester", "The Jeweller's Boon", "The Journey", "The King's Blade", "The King's Heart", "The Landing", "The Last One Standing", "The Lich", "The Life Thief", "The Lion", "The Lord in Black", "The Lord of Celebration", "The Lover", "The Lunaris Priestess", "The Mad King", "The Master", "The Master Artisan", "The Mayor", "The Mercenary", "The Messenger", "The Metalsmith's Gift", "The Mountain", "The Nurse", "The Oath", "The Obscured", "The Offering", "The Old Man", "The One With All", "The Opulent", "The Pack Leader", "The Pact", "The Penitent", "The Poet", "The Polymath", "The Porcupine", "The Price of Loyalty", "The Price of Protection", "The Primordial", "The Professor", "The Puzzle", "The Queen", "The Rabid Rhoa", "The Realm", "The Risk", "The Rite of Elements", "The Road to Power", "The Ruthless Ceinture", "The Sacrifice", "The Saint's Treasure", "The Samurai's Eye", "The Scarred Meadow", "The Scavenger", "The Scholar", "The Seeker", "The Sephirot", "The Side Quest", "The Sigil", "The Siren", "The Skeleton", "The Soul", "The Spark and the Flame", "The Spoiled Prince", "The Standoff", "The Stormcaller", "The Summoner", "The Sun", "The Surgeon", "The Surveyor", "The Survivalist", "The Sword King's Salute", "The Thaumaturgist", "The Throne", "The Tower", "The Traitor", "The Trial", "The Twilight Moon", "The Twins", "The Tyrant", "The Undaunted", "The Undisputed", "The Union", "The Valkyrie", "The Valley of Steel Boxes", "The Vast", "The Visionary", "The Void", "The Warden", "The Warlord", "The Watcher", "The Web", "The Wilted Rose", "The Wind", "The Witch", "The Wolf", "The Wolf's Legacy", "The Wolf's Shadow", "The Wolven King's Bite", "The Wolverine", "The World Eater", "The Wrath", "The Wretched", "Thirst for Knowledge", "Three Faces in the Dark", "Three Voices", "Thunderous Skies", "Time-Lost Relic", "Tranquillity", "Treasure Hunter", "Turn the Other Cheek", "Underground Forest", "Vanity", "Vile Power", "Vinia's Token", "Void of the Elements", "Volatile Power", "Wealth and Power"], "Leaguestone": ["Ambush Leaguestone", "Anarchy Leaguestone", "Beyond Leaguestone", "Bloodlines Leaguestone", "Breach Leaguestone", "Domination Leaguestone", "Essence Leaguestone", "Invasion Leaguestone", "Nemesis Leaguestone", "Onslaught Leaguestone", "Perandus Leaguestone", "Prophecy Leaguestone", "Rampage Leaguestone", "Talisman Leaguestone", "Tempest Leaguestone", "Torment Leaguestone", "Warbands Leaguestone"], "Dagger": ["Ambusher", "Boot Blade", "Boot Knife", "Butcher Knife", "Carving Knife", "Copper Kris", "Demon Dagger", "Ezomyte Dagger", "Fiend Dagger", "Flaying Knife", "Glass Shank", "Golden Kris", "Gutting Knife", "Imp Dagger", "Imperial Skean", "Platinum Kris", "Poignard", "Prong Dagger", "Royal Skean", "Sai", "Skean", "Skinning Knife", "Slaughter Knife", "Stiletto", "Trisula"], "Shield": ["Alder Spiked Shield", "Alloyed Spiked Shield", "Ancient Spirit Shield", "Angelic Kite Shield", "Archon Kite Shield", "Baroque Round Shield", "Battle Buckler", "Bone Spirit Shield", "Branded Kite Shield", "Brass Spirit Shield", "Bronze Tower Shield", "Buckskin Tower Shield", "Burnished Spiked Shield", "Cardinal Round Shield", "Cedar Tower Shield", "Ceremonial Kite Shield", "Champion Kite Shield", "Chiming Spirit Shield", "Colossal Tower Shield", "Compound Spiked Shield", "Copper Tower Shield", "Corroded Tower Shield", "Corrugated Buckler", "Crested Tower Shield", "Crimson Round Shield", "Crusader Buckler", "Driftwood Spiked Shield", "Ebony Tower Shield", "Elegant Round Shield", "Enameled Buckler", "Etched Kite Shield", "Ezomyte Spiked Shield", "Ezomyte Tower Shield", "Fir Round Shield", "Fossilised Spirit Shield", "Gilded Buckler", "Girded Tower Shield", "Goathide Buckler", "Golden Buckler", "Hammered Buckler", "Harmonic Spirit Shield", "Imperial Buckler", "Ironwood Buckler", "Ivory Spirit Shield", "Jingling Spirit Shield", "Lacewood Spirit Shield", "Lacquered Buckler", "Laminated Kite Shield", "Layered Kite Shield", "Linden Kite Shield", "Mahogany Tower Shield", "Maple Round Shield", "Mirrored Spiked Shield", "Mosaic Kite Shield", "Oak Buckler", "Ornate Spiked Shield", "Painted Buckler", "Painted Tower Shield", "Pine Buckler", "Pinnacle Tower Shield", "Plank Kite Shield", "Polished Spiked Shield", "Rawhide Tower Shield", "Redwood Spiked Shield", "Reinforced Kite Shield", "Reinforced Tower Shield", "Rotted Round Shield", "Scarlet Round Shield", "Shagreen Tower Shield", "Sovereign Spiked Shield", "Spiked Bundle", "Spiked Round Shield", "Spiny Round Shield", "Splendid Round Shield", "Splintered Tower Shield", "Steel Kite Shield", "Studded Round Shield", "Supreme Spiked Shield", "Tarnished Spirit Shield", "Teak Round Shield", "Thorium Spirit Shield", "Titanium Spirit Shield", "Twig Spirit Shield", "Vaal Buckler", "Vaal Spirit Shield", "Walnut Spirit Shield", "War Buckler", "Yew Spirit Shield"], "Wand": ["Carved Wand", "Convoking Wand", "Crystal Wand", "Demon's Horn", "Driftwood Wand", "Engraved Wand", "Faun's Horn", "Goat's Horn", "Heathen Wand", "Imbued Wand", "Omen Wand", "Opal Wand", "Pagan Wand", "Profane Wand", "Prophecy Wand", "Quartz Wand", "Sage Wand", "Serpent Wand", "Spiraled Wand", "Tornado Wand"], "Essence": ["Essence of Anger", "Essence of Anguish", "Essence of Contempt", "Essence of Delirium", "Essence of Doubt", "Essence of Dread", "Essence of Envy", "Essence of Fear", "Essence of Greed", "Essence of Hatred", "Essence of Horror", "Essence of Hysteria", "Essence of Insanity", "Essence of Loathing", "Essence of Misery", "Essence of Rage", "Essence of Scorn", "Essence of Sorrow", "Essence of Spite", "Essence of Suffering", "Essence of Torment", "Essence of Woe", "Essence of Wrath", "Essence of Zeal", "Remnant of Corruption"], "Boots": ["Ambush Boots", "Ancient Greaves", "Antique Greaves", "Arcanist Slippers", "Assassin's Boots", "Bronzescale Boots", "Carnal Boots", "Chain Boots", "Clasped Boots", "Conjurer Boots", "Crusader Boots", "Deerskin Boots", "Dragonscale Boots", "Eelskin Boots", "Goathide Boots", "Golden Caligae", "Goliath Greaves", "Hydrascale Boots", "Iron Greaves", "Ironscale Boots", "Leatherscale Boots", "Legion Boots", "Mesh Boots", "Murder Boots", "Nubuck Boots", "Plated Greaves", "Rawhide Boots", "Reinforced Greaves", "Ringmail Boots", "Riveted Boots", "Samite Slippers", "Satin Slippers", "Scholar Boots", "Serpentscale Boots", "Shackled Boots", "Shagreen Boots", "Sharkskin Boots", "Silk Slippers", "Slink Boots", "Soldier Boots", "Sorcerer Boots", "Stealth Boots", "Steel Greaves", "Steelscale Boots", "Strapped Boots", "Titan Greaves", "Trapper Boots", "Two-Toned Boots", "Vaal Greaves", "Velvet Slippers", "Wool Shoes", "Wrapped Boots", "Wyrmscale Boots", "Zealot Boots"], "Scarab": ["Gilded Ambush Scarab", "Gilded Bestiary Scarab", "Gilded Breach Scarab", "Gilded Cartography Scarab", "Gilded Divination Scarab", "Gilded Elder Scarab", "Gilded Harbinger Scarab", "Gilded Legion Scarab", "Gilded Perandus Scarab", "Gilded Reliquary Scarab", "Gilded Shaper Scarab", "Gilded Sulphite Scarab", "Gilded Torment Scarab", "Polished Ambush Scarab", "Polished Bestiary Scarab", "Polished Breach Scarab", "Polished Cartography Scarab", "Polished Divination Scarab", "Polished Elder Scarab", "Polished Harbinger Scarab", "Polished Legion Scarab", "Polished Perandus Scarab", "Polished Reliquary Scarab", "Polished Shaper Scarab", "Polished Sulphite Scarab", "Polished Torment Scarab", "Rusted Ambush Scarab", "Rusted Bestiary Scarab", "Rusted Breach Scarab", "Rusted Cartography Scarab", "Rusted Divination Scarab", "Rusted Elder Scarab", "Rusted Harbinger Scarab", "Rusted Legion Scarab", "Rusted Perandus Scarab", "Rusted Reliquary Scarab", "Rusted Shaper Scarab", "Rusted Sulphite Scarab", "Rusted Torment Scarab"], "Currency": ["Albino Rhoa Feather", "Ancient Orb", "Ancient Shard", "Annulment Shard", "Apprentice Cartographer's Seal", "Armourer's Scrap", "Awakened Sextant", "Awakener's Orb", "Bestiary Orb", "Binding Shard", "Blacksmith's Whetstone", "Blessed Orb", "Cartographer's Chisel", "Chaos Orb", "Chaos Shard", "Chromatic Orb", "Crusader's Exalted Orb", "Divine Orb", "Engineer's Orb", "Engineer's Shard", "Eternal Orb", "Exalted Orb", "Exalted Shard", "Gemcutter's Prism", "Glassblower's Bauble", "Harbinger's Orb", "Harbinger's Shard", "Horizon Shard", "Hunter's Exalted Orb", "Imprinted Bestiary Orb", "Ivory Watchstone", "Jeweller's Orb", "Journeyman Cartographer's Seal", "Master Cartographer's Seal", "Mirror Shard", "Mirror of Kalandra", "Orb of Alchemy", "Orb of Alteration", "Orb of Annulment", "Orb of Augmentation", "Orb of Binding", "Orb of Chance", "Orb of Fusing", "Orb of Horizons", "Orb of Regret", "Orb of Scouring", "Orb of Transmutation", "Perandus Coin", "Portal Scroll", "Prime Sextant", "Redeemer's Exalted Orb", "Regal Orb", "Regal Shard", "Scroll of Wisdom", "Silver Coin", "Simple Sextant", "Stacked Deck", "Unshaping Orb", "Vaal Orb", "Vial of Awakening", "Vial of Consequence", "Vial of Dominance", "Vial of Fate", "Vial of Sacrifice", "Vial of Summoning", "Vial of Transcendence", "Vial of the Ghost", "Vial of the Ritual", "Warlord's Exalted Orb"], "Ring": ["Amethyst Ring", "Breach Ring", "Cerulean Ring", "Coral Ring", "Diamond Ring", "Gold Ring", "Golden Hoop", "Iron Ring", "Moonstone Ring", "Opal Ring", "Paua Ring", "Prismatic Ring", "Ruby Ring", "Sapphire Ring", "Steel Ring", "Topaz Ring", "Two-Stone Ring", "Unset Ring", "Vermillion Ring"], "Belt": ["Chain Belt", "Cloth Belt", "Crystal Belt", "Golden Obi", "Heavy Belt", "Leather Belt", "Rustic Sash", "Studded Belt", "Stygian Vise", "Vanguard Belt"], "Nets": ["Necromancy Net", "Reinforced Iron Net", "Reinforced Rope Net", "Reinforced Steel Net", "Simple Iron Net", "Simple Rope Net", "Simple Steel Net", "Strong Iron Net", "Strong Rope Net", "Strong Steel Net", "Thaumaturgical Net"], "Metamorph": ["Abrasive Catalyst", "Fertile Catalyst", "Imbued Catalyst", "Intrinsic Catalyst", "Metamorph Brain", "Metamorph Eye", "Metamorph Heart", "Metamorph Liver", "Metamorph Lung", "Prismatic Catalyst", "Tempering Catalyst", "Turbulent Catalyst"], "Staff": ["Coiled Staff", "Crescent Staff", "Eclipse Staff", "Ezomyte Staff", "Foul Staff", "Gnarled Branch", "Highborn Staff", "Imperial Staff", "Iron Staff", "Judgement Staff", "Lathi", "Long Staff", "Maelstr\u00f6m Staff", "Military Staff", "Moon Staff", "Primitive Staff", "Primordial Staff", "Quarterstaff", "Royal Staff", "Serpentine Staff", "Vile Staff", "Woodful Staff"]};
+    this.includeBaseType = "One Hand Axe,One Hand Sword,One Hand Mace,Two Hand Mace,Sceptre,Two Hand Axe,Two Hand Sword,Bow,Claw,Dagger,Wand,Staff";
+    
+    this.doNotIncludeQuality = "Jewel, Quiver";
+
+    //weapon range things
+    this.runeDaggers = "Carving Knife, Boot Knife, Copper Kris, Skean, Imp Dagger, Butcher Knife, Boot Blade, Golden Kris, Royal Skean, Fiend Dagger, Slaughter Knife, Ezomyte Dagger, Platinum Kris, Imperial Skean, Demon Dagger";
+    this.thrustSwords = "Rusted Spike, Whalebone Rapier, Battered Foil, Basket Rapier, Jagged Foil, Antique Rapier, Elegant Foil, Thorn Rapier, Smallsword, Wyrmbone Rapier, Burnished Foil, Estoc, Serrated Foil, Primeval Rapier, Fancy Foil, Apex Rapier, Courtesan Sword, Dragonbone Rapier, Tempered Foil, Pecoraro, Spiraled Foil, Vaal Rapier, Jewelled Foil, Harpy Rapier, Dragoon Sword";
+    this.staves = "Iron Staff, Coiled Staff, Vile Staff, Military Staff, Serpentine Staff, Foul Staff, Ezomyte Staff, Maelstr\u00f6m Staff, Judgement Staff, Gnarled Branch, Primitive Staff, Long Staff, Royal Staff, Crescent Staff, Woodful Staff, Quarterstaff, Highborn Staff, Moon Staff, Primordial Staff, Lathi, Imperial Staff, Eclipse Staff";
 
     this.item_rarities = ["Normal", "Magic", "Rare", "Unique", "Gem", "Currency", "", "", "", "Relic"];
 
+    this.returnWeaponRange = function() {
+
+         if (this.runeDaggers.indexOf(this.itemType) !== -1)
+            return 10;
+
+        if (this.thrustSwords.indexOf(this.itemType) !== -1)
+            return 14;
+
+        if (this.staves.indexOf(this.itemType) !== -1)
+            return 13;
+
+        if (this.itemBase == "Dagger")
+            return 10;
+
+        if (this.itemBase == "Sceptre")
+            return 11;
+
+        if (this.itemBase == "Claw")
+            return 11;
+
+        if (this.itemBase == "One Hand Mace")
+            return 11;
+
+        if (this.itemBase == "Fishing Rods")
+            return 13;
+
+        if (this.itemBase.indexOf("One ") !== -1)
+            return 11;
+
+        if (this.itemBase.indexOf("Two ") !== -1)
+            return 13;
+
+        return -1;
+
+    };
+
+
     this.returnItemQuality = function() {
-        return this.htmlDiv.find("td[data-name='q']").data("value");
-    };
 
-    this.returnImplicitCount = function() {
+        if (this.doNotIncludeQuality.indexOf(this.itemBase) === -1)
+        {
+            //need to check for  Quality (Attribute Modifiers) items
+            var implicitQuality = this.returnQualityMods();
+            var quality = this.htmlDiv.find("td[data-name='q']").data("value");
 
-        var modCount = 0;
-        this.htmlDiv.find(".withline li").each(function(){
-            modCount += 1;
-        });
-
-        this.htmlDiv.find("ul .mods:not(.withline) li").each(function(){
-            var that = $(this);
-
-            if (that.text().indexOf('enchanted') !== -1) {
-                modCount += 1;
-            }
-            if (that.text().indexOf('crafted') !== -1) {
-                modCount += 1;
-            }
-
-            return modCount;
-
-        });
-
-
-        return modCount;
-    };
-
-    this.returnItemNameAndType = function() {
-        var fullTitle = this.htmlDiv.find(".title").text().trim();
-        for (var i = 0; i < this.items_types.length; ++i) {
-            var currentItemType = this.items_types[i];
-            if (fullTitle.indexOf(currentItemType) !== -1) {
-
-                if (fullTitle.endsWith(currentItemType)) {
-                    this.itemName = fullTitle.replace(currentItemType, "");
-                } else {
-                    this.itemName = fullTitle;
+            if (implicitQuality === "")
+            {
+                if (quality !== "" && quality !== 0)
+                {
+                    quality = "Quality: +" + quality + "%";
                 }
 
-                this.itemType = currentItemType;
+            } else {
+                quality = implicitQuality;
+            }
 
-                return;
+
+            return quality;
+        }
+
+        return "";
+    };
+
+    this.buildItemNameAndType = function() {
+
+        var main = this;
+
+        var fullTitle = this.htmlDiv.find(".title").text().trim();
+
+        var isUnique = this.returnRarity() === "Unique";
+
+        if (fullTitle.indexOf("Synthesised") !== -1)
+            this.isSynthesised = true;
+
+        if (fullTitle.indexOf("corrupted") !== -1)
+            this.isCorrupted = true;
+
+        fullTitle = fullTitle.replace(" Synthesised", "");
+        fullTitle = fullTitle.replace("corrupted ", "");
+
+        var found = false;
+
+        for (var tempBase in this.items_types) {
+            var commaSplitList = String(this.items_types[tempBase]).split(',');
+            for (var i = 0; i < commaSplitList.length; i++) {
+
+                if (fullTitle.indexOf(commaSplitList[i]) !== -1 && commaSplitList[i] !== '') {
+
+                    if (fullTitle.endsWith(commaSplitList[i])) {
+                        fullTitle = fullTitle.replace(commaSplitList[i], "");
+                    }
+
+                    if (isUnique === true && main.isSynthesised === true)
+                        commaSplitList[i] = "Synthesised " + commaSplitList[i];
+
+                    this.itemType = commaSplitList[i];
+                    this.itemName = fullTitle;
+
+                    found = true;
+
+                    break;
+                }
+            }
+
+            if (found == true) {
+                this.itemBase = tempBase;
+                break;
             }
         }
 
-        this.itemName = fullTitle;
-        this.itemType = 'Unknown';
+        if (found == false) {
+            this.itemName = fullTitle;
+            this.itemBase = 'Unknown';
+            this.itemType = 'Unknown';
+        }
 
     };
 
-    this.returnItemSockets = function () {
+    this.returnItemSockets = function() {
         var sockets = "";
         var find = this.htmlDiv.find(".sockets .sockets-inner div");
         for (var i = 0; i < find.length; i++) {
             var a = find[i];
-             var classes = a.className.split(' ');
+            var classes = a.className.split(' ');
             if (classes.indexOf('socketLink') >= 0) {
                 sockets += "-";
             } else {
@@ -135,12 +216,98 @@ function PoeItem(div) {
         return sockets;
     };
 
+    this.returnWeaponStats = function() {
+
+        var physDamage = this.htmlDiv.find("td[data-name='quality_pd']").text().trim();
+        var eleDamage = this.htmlDiv.find("td[data-name='ed']").text().trim();
+        var critChance = this.htmlDiv.find("td[data-name='crit']").text().trim();
+        var attacksPerSec = this.htmlDiv.find("td[data-name='aps']").text().trim();
+
+        var stats = "";
+
+        if (physDamage !== "")
+            stats += "Physical Damage: " + physDamage + "\r\n";
+
+        if (eleDamage !== "")
+            stats += "Elemental Damage: " + eleDamage + "\r\n";
+
+        if (critChance !== "")
+            //use 2 decimal places
+            stats += "Critical Strike Chance: " + (Math.round(critChance * 100) / 100).toFixed(2) + "%\r\n";
+
+        if (attacksPerSec !== "")
+            stats += "Attacks per Second: " + attacksPerSec + "\r\n";
+
+        var range = this.returnWeaponRange();
+        if (range !== -1)
+            stats += "Weapon Range: " + range + "\r\n";
+
+        return stats.trim();
+
+    };
+
+    this.returnRequirementStats = function() {
+
+        var stats = "";
+
+        this.htmlDiv.find("ul.requirements.proplist li").each(function(){
+            var that = $(this);
+
+            if (that.text().indexOf('Strength') !== -1)
+                stats += "Str: " + that.text().replace("Strength: ","").trim() + '\r\n';
+
+            if (that.text().indexOf('Dexterity') !== -1)
+                stats += "Dex: " + that.text().replace("Dexterity: ","").trim() + '\r\n';
+
+            if (that.text().indexOf('Intelligence') !== -1)
+                stats += "Int: " + that.text().replace("Intelligence: ","").trim() + '\r\n';
+        });
+
+        return stats.trim();
+
+    };
+
+    this.returnArmourStats = function() {
+
+        var block = this.htmlDiv.find("td[data-name='block']").text().trim();
+        var armour = this.htmlDiv.find("td[data-name='quality_armour']").text().trim();
+        var evasion = this.htmlDiv.find("td[data-name='quality_evasion']").text().trim();
+        var energyShield = this.htmlDiv.find("td[data-name='quality_shield']").text().trim();
+
+        var stats = "";
+
+        if (block !== "")
+            stats += "Chance to Block: " + Math.round(block) + "%\r\n";
+
+        if (armour !== "")
+            stats += "Armour: " + Math.round(armour) + "\r\n";
+
+        if (evasion !== "")
+            stats += "Evasion Rating: " + Math.round(evasion) + "\r\n";
+
+        if (energyShield !== "")
+            stats += "Energy Shield: " + Math.round(energyShield) + "\r\n";
+
+        return stats.trim();
+
+    };
+
     this.returnLevelRequirement = function() {
-        return this.htmlDiv.find(".first-line li").first().text().replace("Level:", "").trim();
+        var level = this.htmlDiv.find(".first-line li").first().text().replace("Level:", "").replace("ilvl:","").trim();
+        if (level == "")
+            level = "1";
+        return level;
     };
 
     this.returnItemLevel = function() {
-        return this.htmlDiv.find("span[data-name='ilvl']").text().replace("ilvl:", "").trim();
+        var level = this.htmlDiv.find("span[data-name='ilvl']").text().replace("ilvl:", "").trim();
+        if (level == "")
+            level = "1";
+        return level;
+    };
+
+    this.returnIsFracturered = function() {
+        return this.htmlDiv.find('.label-fractured').text() !== ""
     };
 
     this.returnRarity = function() {
@@ -148,22 +315,27 @@ function PoeItem(div) {
         return this.item_rarities[Number(rarityIndex)];
     };
 
-    this.returnImplicit = function() {
-        var enchanted = this.returnEnchantedMods();
-
-        if (enchanted !== "") {
-            return enchanted.trim();
-        } else {
-            return this.returnImplicitMods();
-        }
-    };
-
     this.returnImplicitMods = function() {
         var itemMods = "";
+
         this.htmlDiv.find(".withline li").each(function(){
             var that = $(this);
             itemMods += that.text() + '\r\n';
         });
+        return itemMods.trim();
+    };
+
+    this.returnQualityMods = function() {
+        var itemMods = "";
+
+        //this will find items like Quality (Attribute Modifiers): +16%
+        this.htmlDiv.find("ul.item-mods li:not([class])").each(function(){
+            var that = $(this);
+            if (that.text().indexOf('Quality (') !== -1) {
+                itemMods += that.text() + '\r\n';
+            }
+        });
+
         return itemMods.trim();
     };
 
@@ -173,11 +345,11 @@ function PoeItem(div) {
             var that = $(this);
 
             if (that.text().indexOf('enchanted') !== -1) {
-                itemMods += '{crafted}' + that.text().replace("enchanted", "").trim() + '\r\n';
+                itemMods += that.text().replace("enchanted", "").trim() + '\r\n';
             }
 
         });
-        return itemMods;
+        return itemMods.trim();
     };
 
     this.returnCraftedMods = function() {
@@ -186,35 +358,50 @@ function PoeItem(div) {
             var that = $(this);
 
             if (that.text().indexOf('crafted') !== -1) {
-                craftedItems += '{crafted}' + that.text().replace("crafted", "").trim() + '\r\n';
+                craftedItems += that.text().replace("crafted", "").trim() + '\r\n';
             }
         });
-        return craftedItems;
+        return craftedItems.trim();
     };
-
 
     this.returnItemMods = function() {
         var itemMods = "";
+        var main = this;
         this.htmlDiv.find("ul .mods:not(.withline) li").each(function(){
             var that = $(this);
             if (that.text().indexOf('enchanted') === -1 &&
                 that.text().indexOf('crafted') === -1 &&
                 that.text().indexOf('total') === -1 &&
                 that.text().indexOf('pseudo') === -1) {
-                itemMods += that.contents().not($("span")).text().trim() + '\r\n';
+
+                var item = that.contents().not($("span")).text().trim();
+                if (item.indexOf('Crusader') !== -1)
+                     main.isCrusader = true;
+                else if (item.indexOf('Warlord') !== -1)
+                     main.isWarlord = true;
+                else if (item.indexOf('Redeemer') !== -1)
+                     main.isRedeemer = true;
+                else if (item.indexOf('Hunter') !== -1)
+                     main.isHunter = true;
+                else if (item.indexOf('Shaper') !== -1)
+                     main.isShaper = true;
+                else if (item.indexOf('Elder') !== -1)
+                     main.isElder = true;
+                else if (item.indexOf('Mirrored') !== -1)
+                    main.isMirror = true;
+                else
+                    itemMods += item + '\r\n';
+
             }
         });
-        return itemMods;
+        return itemMods.trim();
     };
 
 }
 
 PoeItem.prototype.buildItem = function() {
 
-    var itemMods = this.returnItemMods();
-    var implicit = this.returnImplicit();
-
-    this.returnItemNameAndType();
+    this.buildItemNameAndType();
 
     var item = "";
 
@@ -225,26 +412,110 @@ PoeItem.prototype.buildItem = function() {
     if (this.itemName != "")
         item += this.itemName + '\r\n';
     item += this.itemType + '\r\n';
-    item += 'Item Level: ' + this.returnItemLevel() + '\r\n';
+    item += '--------' + '\r\n';
+
+    if (this.includeBaseType.indexOf(this.itemBase) !== -1)
+    {
+        item += this.itemBase + '\r\n';
+        item += this.returnWeaponStats() + '\r\n';
+        item += '--------' + '\r\n';
+    }
 
     var quality = this.returnItemQuality();
     if (quality !== "")
-        item += "Quality: " + quality + '\r\n';
+        item += quality + '\r\n';
+
+    var armourStats = this.returnArmourStats();
+    if (armourStats !== "")
+        item += armourStats + '\r\n';
+
+    if (armourStats !== "" || quality !== "")
+        item += '--------' + '\r\n';
+
+    item += 'Requirements: ' + '\r\n';
+    item += 'Level: ' + this.returnLevelRequirement() + '\r\n';
+    var requirementStats = this.returnRequirementStats();
+    if (requirementStats !== "")
+        item += this.returnRequirementStats() + '\r\n';
+    item += '--------' + '\r\n';
 
     var sockets = this.returnItemSockets();
     if (sockets !== "")
+    {
         item += "Sockets: " + sockets + '\r\n';
+        item += '--------' + '\r\n';
+    }
 
-    item += 'Implicits: ' + this.returnImplicitCount() + '\r\n';
+    item += 'Item Level: ' + this.returnItemLevel() + '\r\n';
+    item += '--------' + '\r\n';
 
+    var enchanted = this.returnEnchantedMods();
+    if (enchanted !== "")
+    {
+        item += enchanted + '\r\n';
+        item += '--------' + '\r\n';
+    }
+
+    var implicit = this.returnImplicitMods();
     if (implicit !== "")
+    {
         item += implicit + '\r\n';
+        item += '--------' + '\r\n';
+    }
 
-    item += itemMods;
+    item += this.returnItemMods() + '\r\n';
 
     var crafted = this.returnCraftedMods();
-    if (crafted !== "") {
-        item += crafted;
+    if (crafted !== "")
+        item += crafted + '\r\n';
+
+    item += '--------' + '\r\n';
+
+    if (this.isCorrupted == true)
+    {
+        item += 'Corrupted' + '\r\n';
+        item += '--------' + '\r\n';
+    }
+
+    if (this.isCrusader == true)
+        item += 'Crusader Item' + '\r\n';
+    if (this.isWarlord == true)
+        item += 'Warlord Item' + '\r\n';
+    if (this.isRedeemer == true)
+        item += 'Redeemer Item' + '\r\n';
+    if (this.isHunter == true)
+        item += 'Hunter Item' + '\r\n';
+    if (this.isElder == true)
+        item += 'Elder Item' + '\r\n';
+    if (this.isShaper == true)
+        item += 'Shaper Item' + '\r\n';
+
+
+    if (this.isCrusader == true || this.isWarlord == true || this.isRedeemer == true || this.isHunter == true || this.isElder == true || this.isShaper == true)
+        item += '--------' + '\r\n';
+
+    if (this.returnIsFracturered() == true)
+    {
+        item += 'Fractured Item' + '\r\n';
+        item += '--------' + '\r\n';
+    }
+
+    if (this.isSynthesised == true)
+    {
+        item += 'Synthesised Item' + '\r\n';
+        item += '--------' + '\r\n';
+    }
+
+    if (this.isMirror == true)
+    {
+        item += 'Mirrored' + '\r\n';
+        item += '--------' + '\r\n';
+    }
+
+    //remove bottom ------ if it exists
+    if (item.charAt(item.length - 3) == '-') {
+        item = item.trim();
+        item = item.substr(0, item.length - 8);
     }
 
     return item.trim();
